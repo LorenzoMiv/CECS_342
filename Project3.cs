@@ -10,17 +10,11 @@ class Project3
     {
         DirectoryInfo dir = new(path);
 
-        IEnumerable<FileInfo> fileList = dir.GetFiles("*.*", SearchOption.AllDirectories);
+        IEnumerable<FileInfo> fileList = dir.EnumerateFiles("*.*", SearchOption.AllDirectories);
 
         foreach (var file in fileList)
         {
             yield return file.ToString();
-        }
-
-        var files = Directory.EnumerateFiles(path);
-        foreach (string file in files)
-        {
-            yield return file;
         }
         
     }
