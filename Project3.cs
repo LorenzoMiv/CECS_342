@@ -1,4 +1,4 @@
-﻿//CECS 342 Section 5
+//CECS 342 Section 5
 //Lorenzo Murillo IV
 using System.Xml.Linq;
 using System.Data;
@@ -6,18 +6,9 @@ using System.Data;
 
 class Project3
 {
+    //creates an enumeration without side effects, this is how it's typed in c#
     static IEnumerable<string> EnumerableFilesRecursively(string path)
-    {
-        DirectoryInfo dir = new(path);
-
-        IEnumerable<FileInfo> fileList = dir.EnumerateFiles("*.*", SearchOption.AllDirectories);
-
-        foreach (var file in fileList)
-        {
-            yield return file.ToString();
-        }
-        
-    }
+        => Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories);
 
     static string FormatBySize(long byteSize)
     {
@@ -33,37 +24,37 @@ class Project3
 
     static XDocument CreateReport(IEnumerable<string> files)
     {
-        var docTable = (from f in files
-                       group f by new FileInfo(f).Extension into fileGroup
-                       select new
-                       {
-                           Type = fileGroup.Key,
-                           Count = fileGroup.Count(),
-                           Size = fileGroup.Select(f => new FileInfo(f).Length).Sum()
-
-                       }).OrderByDescending(size => size.Size);
+        var docTable =  from f in files
+                        group f by new FileInfo(f).Extension into fileGroup
+                        let totalSize = fileGroup.Sum(f => new FileInfo(f).Length)
+                        orderby totalSize descending
+                        select new
+                        {
+                            Type = fileGroup.Key,
+                            Count = fileGroup.Count(),
+                            Size = FormatBySize(totalSize)
+                        }; 
     
         XDocument report = new XDocument(new XComment("DOCTYPE html"),
                   new XElement("html",
                   new XElement("head",
-                    new XElement("style",
-                       new XAttribute("type", "text/css"), " th, td {border: 0.75px solid teal;}"),
-                    new XElement("body",
-                    new XElement("h1", "Project 3 CECS 342 Lorenzo Murillo IV"),
-                    //new XElement("h2", 
-                    new XElement("table",
-                         new XAttribute("style", "width: 50%"),
-                         new XAttribute("border", 1),
-                            new XElement("tr",
-                               new XElement("th", "Type"),
-                               new XElement("th", "Count"),
-                               new XElement("th", "Size")),
-                             new XElement("tr", from row in docTable
-                                                select 
-                                new XElement("tr",
-                                    new XElement("td", row.Type, new XAttribute("style", "text-align:left")),
-                                    new XElement("td", row.Count, new XAttribute("style", "text-align:center")),
-                                    new XElement("td", FormatBySize(row.Size), new XAttribute("style", "text-align:center")))))))));
+                  new XElement("style",
+                  new XAttribute("type", "text/css"), " th, td {border: 0.75px solid teal;}"),
+                  new XElement("body",
+                  new XElement("h1", "Project 3 CECS 342 Lorenzo Murillo IV"),
+                  new XElement("table",
+                  new XAttribute("style", "width: 50%"),
+                  new XAttribute("border", 1),
+                  new XElement("tr",
+                  new XElement("th", "Type"),
+                  new XElement("th", "Count"),
+                  new XElement("th", "Size")),
+                  new XElement("tr", from row in docTable select 
+                  new XElement("tr",
+                  new XElement("td", row.Type, new XAttribute("style", "text-align:left")),
+                  new XElement("td", row.Count, new XAttribute("style", "text-align:center")),
+                  new XElement("td", row.Size, new XAttribute("style", "text-align:center")))))))));
+
         return report;
     }
 
